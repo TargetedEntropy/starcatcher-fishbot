@@ -1,0 +1,125 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev' version '2.0.142'
+    id 'idea'
+}
+
+version = mod_version
+group = mod_group_id
+
+base {
+    archivesName = mod_id
+}
+
+repositories {
+    mavenLocal()
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'Modrinth'
+                url = 'https://api.modrinth.com/maven'
+            }
+        }
+        filter {
+            includeGroup 'maven.modrinth'
+        }
+    }
+    maven {
+        name = 'wdiscute'
+        url = 'https://wdiscute.github.io/'
+    }
+}
+
+sourceSets {
+    // Dev-only end-to-end harness (./gradlew runE2e). Never packaged into the mod jar.
+    devtest
+}
+
+configurations {
+    // Like runtimeOnly, but not published/exposed: only used for the dev client run.
+    localRuntime
+    runtimeClasspath.extendsFrom localRuntime
+}
+
+dependencies {
+    // Starcatcher is required at runtime but never bundled: we only compile against it.
+    compileOnly "maven.modrinth:starcatcher:${starcatcher_version}"
+    // wdUtils is bundled inside Starcatcher (jar-in-jar); needed for types like MaybeStack.
+    compileOnly "com.wdiscute:wdUtils:${wdutils_version}"
+
+    // Dev runs only (./gradlew runClient): load the real Starcatcher next to the bot.
+    localRuntime "maven.modrinth:starcatcher:${starcatcher_version}"
+
+    devtestImplementation sourceSets.main.output
+    devtestCompileOnly "maven.modrinth:starcatcher:${starcatcher_version}"
+    devtestCompileOnly "com.wdiscute:wdUtils:${wdutils_version}"
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(25)
+}
+
+neoForge {
+    version = project.neo_version
+
+    runs {
+        client {
+            client()
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+        // Creates a test world, builds a pool, hands over a rod and lets the bot fish.
+        e2e {
+            client()
+            systemProperty 'scfishbot.e2e', 'true'
+            systemProperty 'scfishbot.e2e.catches', project.findProperty('e2eCatches') ?: '5'
+            systemProperty 'scfishbot.e2e.timeoutMs', project.findProperty('e2eTimeoutMs') ?: '720000'
+            gameDirectory = project.file('run-e2e')
+        }
+        configureEach {
+            logLevel = org.slf4j.event.Level.INFO
+        }
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+        }
+        "${mod_id}_devtest" {
+            sourceSet(sourceSets.devtest)
+        }
+    }
+}
+
+neoForge.addModdingDependenciesTo(sourceSets.devtest)
+
+var generateModMetadata = tasks.register('generateModMetadata', ProcessResources) {
+    var replaceProperties = [
+            minecraft_version         : minecraft_version,
+            minecraft_version_range   : minecraft_version_range,
+            neo_version_range         : neo_version_range,
+            starcatcher_version_range : starcatcher_version_range,
+            mod_id                    : mod_id,
+            mod_name                  : mod_name,
+            mod_license               : mod_license,
+            mod_version               : mod_version,
+            mod_authors               : mod_authors,
+            mod_description           : mod_description,
+    ]
+    inputs.properties replaceProperties
+    expand replaceProperties
+    from 'src/main/templates'
+    into 'build/generated/sources/modMetadata'
+}
+sourceSets.main.resources.srcDir generateModMetadata
+neoForge.ideSyncTask generateModMetadata
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+idea {
+    module {
+        downloadSources = true
+        downloadJavadoc = true
+    }
+}

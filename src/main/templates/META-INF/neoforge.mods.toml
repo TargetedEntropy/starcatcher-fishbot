@@ -1,0 +1,41 @@
+modLoader="javafml"
+loaderVersion="[1,)"
+license="${mod_license}"
+issueTrackerURL="https://github.com/TargetedEntropy/starcatcher-fishbot/issues"
+
+[[mods]]
+modId="${mod_id}"
+version="${mod_version}"
+displayName="${mod_name}"
+displayURL="https://github.com/TargetedEntropy/starcatcher-fishbot"
+# Client-only: servers never need this mod and vanilla-compatible servers accept it.
+displayTest="IGNORE_ALL_VERSION"
+authors="${mod_authors}"
+description='''${mod_description}
+
+Keys (rebindable under Controls > Starcatcher FishBot):
+  F8  - toggle full auto (cast, hook, minigame, recast)
+  F7  - toggle minigame assist only
+Commands: /fishbot help
+'''
+
+[[dependencies.${mod_id}]]
+modId="neoforge"
+type="required"
+versionRange="${neo_version_range}"
+ordering="NONE"
+side="CLIENT"
+
+[[dependencies.${mod_id}]]
+modId="minecraft"
+type="required"
+versionRange="${minecraft_version_range}"
+ordering="NONE"
+side="CLIENT"
+
+[[dependencies.${mod_id}]]
+modId="starcatcher"
+type="required"
+versionRange="${starcatcher_version_range}"
+ordering="AFTER"
+side="CLIENT"

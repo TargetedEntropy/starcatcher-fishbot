@@ -1,0 +1,10 @@
+modLoader="javafml"
+loaderVersion="[1,)"
+license="MIT"
+
+[[mods]]
+modId="scfishbot_devtest"
+version="0.0.0"
+displayName="FishBot E2E Harness (dev only)"
+description='''Only active with -Dscfishbot.e2e=true. Never shipped.'''
+displayTest="IGNORE_ALL_VERSION"
